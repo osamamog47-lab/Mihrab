@@ -1,0 +1,37 @@
+name: Build Signed Release AAB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Generate Keystore
+        run: |
+          keytool -genkeypair -v -keystore release-key.jks -alias mihrab_key -keyalg RSA -keysize 2048 -validity 10000 -storepass Mihrab@2026 -keypass Mihrab@2026 -dname "CN=Mihrab App, OU=Dev, O=Mihrab, L=Amman, S=Amman, C=JO"
+
+      - name: Build Signed AAB
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/release-key.jks -Pandroid.injected.signing.store.password=Mihrab@2026 -Pandroid.injected.signing.key.alias=mihrab_key -Pandroid.injected.signing.key.password=Mihrab@2026
+
+      - name: Upload AAB and Keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mihrab-Store-Files
+          path: |
+            app/build/outputs/bundle/release/*.aab
+            release-key.jks
