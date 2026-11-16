@@ -19,14 +19,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Generate Keystore
         run: |
           keytool -genkeypair -v -keystore release-key.jks -alias mihrab_key -keyalg RSA -keysize 2048 -validity 10000 -storepass Mihrab@2026 -keypass Mihrab@2026 -dname "CN=Mihrab App, OU=Dev, O=Mihrab, L=Amman, S=Amman, C=JO"
 
       - name: Build Signed AAB
         run: |
-          chmod +x gradlew
-          ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/release-key.jks -Pandroid.injected.signing.store.password=Mihrab@2026 -Pandroid.injected.signing.key.alias=mihrab_key -Pandroid.injected.signing.key.password=Mihrab@2026
+          gradle bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/release-key.jks -Pandroid.injected.signing.store.password=Mihrab@2026 -Pandroid.injected.signing.key.alias=mihrab_key -Pandroid.injected.signing.key.password=Mihrab@2026
 
       - name: Upload AAB and Keystore
         uses: actions/upload-artifact@v4
